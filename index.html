@@ -1,48 +1,160 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Socket.IO chat</title>
-    <style>
-      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
-      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
-      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
-      #input:focus { outline: none; }
-      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+<html lang="en">
 
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages > li { padding: 0.5rem 1rem; }
-      #messages > li:nth-child(odd) { background: #efefef; }
-    </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
-    <script src="/socket.io/socket.io.js"></script>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <title>Blinkt</title>
+  <style>
+    body {
+      margin: 0;
+      padding-bottom: 3rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-    <script>
-      var socket = io();
+    #form {
+      /* background: rgba(0, 0, 0, 0.15); */
+      padding: 0.25rem;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      height: 3rem;
+      box-sizing: border-box;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
 
-      var messages = document.getElementById('messages');
-      var form = document.getElementById('form');
-      var input = document.getElementById('input');
+    }
 
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (input.value) {
-          socket.emit('chat message', input.value);
-          input.value = '';
-        }
-      });
+    #input {
+      border: none;
+      padding: 0 1rem;
+      flex-grow: 1;
+      border-radius: 2rem;
+      margin: 0.25rem;
+      background-color: #efefef;
+    }
 
-      socket.on('chat message', function(msg) {
-        var item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-    </script>
-  </body>
+    #input:focus {
+      outline: none;
+    }
+
+    #form>button {
+      background: #333;
+      border: none;
+      padding: 0 1rem;
+      margin: 0.25rem;
+      border-radius: 20px;
+      outline: none;
+      color: #fff;
+      background-color: #476ef7 !important;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #messages>li {
+      display: inline-block;
+      width: calc(100%-30px);
+      display: grid;
+      padding: 15px;
+      justify-content: left;
+    }
+
+    /* #messages>li:nth-child(odd) {
+      background: #efefef;
+    } */
+
+    #messages>li.from-me {
+      justify-content: right;
+    }
+
+    #messages>li div {
+      background-color: #efefef;
+      color: #444455;
+      border-radius: 18px;
+      padding: 10px 18px;
+      -moz-width: fit-content;
+      width: fit-content;
+    }
+
+    #messages>li.from-me div {
+      color: white !important;
+      background-color: #476ef7 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="input" autocomplete="off" /><button type="submit">Send</button>
+    <input id="author" automcomplete="off">
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./anime.min.js"></script>
+
+  <script>
+
+    anime({
+      targets: 'div',
+      translateX: 250,
+      rotate: '1turn',
+      backgroundColor: '#FFF',
+      duration: 800
+    });
+
+    var socket = io();
+
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const authorInput = document.getElementById('author');
+
+    // UUID
+
+    function uuidv4() {
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (input.value) {
+        addMessage(input.value, `${authorInput.value} (Me)`);
+        socket.emit('chat message', input.value, authorInput.value);
+        input.value = '';
+      }
+    });
+
+    socket.on('chat message', function (msg, author) {
+      if (author != authorInput.value) {
+        addMessage(msg, author);
+      }
+    });
+
+    function addMessage(text, author) {
+      var item = document.createElement('li');
+      var bubble = document.createElement('div');
+      bubble.textContent = text + author;
+
+      item.appendChild(bubble);
+
+      if (author == `${authorInput.value} (Me)`) {
+        console.log('If statement ran');
+        item.classList.add('from-me');
+      }
+
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  </script>
+</body>
+
 </html>
